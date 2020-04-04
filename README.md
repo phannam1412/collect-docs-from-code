@@ -60,8 +60,6 @@ Detail:
 
 ![alt text](output-detail.png)
 
-Example code:
-
 Reference
 =========
 
