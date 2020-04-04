@@ -24,20 +24,25 @@ How it work
 ===========
 
 The script will parse source code files utilizing a sophisticated pattern matching algorithm 
-and create a dictionary for all items.
+and create an abstract syntax tree.
 
-Then it will sort all items and write to the destination file. 
+Then the useful info will be extracted from abstract syntax tree and sorted in ascending order
+to create the readme indexes and detail.
 
 Example
 =======
 
-Input 
+### There are some comments in source code like this: 
 
 ![alt text](input.png)
 
-Output (index and detail):
+### Output after scanning all source codes to create readme index and detail:
+
+Index:
 
 ![alt text](output-list.png)
+
+Detail:
 
 ![alt text](output-detail.png)
 
