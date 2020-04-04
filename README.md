@@ -32,6 +32,26 @@ to create the readme indexes and detail.
 Example
 =======
 
+Eaxmple code:
+
+```
+package main
+
+import collectdocsfromcode "github.com/phannam1412/collect-docs-from-code"
+
+func main() {
+	basePath := "<your project root directory>"
+	paths := []string{
+		basePath + "/src",
+		basePath + "/dev",
+		basePath + "/index.php",
+	}
+	extensions := []string{"php", "go"}
+	writeResultTo := basePath + "README.md"
+	collectdocsfromcode.Run(paths, extensions, writeResultTo)
+}
+```
+
 ### There are some comments in source code like this: 
 
 ![alt text](input.png)
@@ -45,6 +65,8 @@ Index:
 Detail:
 
 ![alt text](output-detail.png)
+
+Example code:
 
 Reference
 =========
