@@ -1,4 +1,6 @@
-# collect-docs-from-code
+Collect docs from code
+======================
+
 Collect documentations from code and create a readme file
 
 Motivation
@@ -16,8 +18,6 @@ At this time, I need to choose:
 
 - or not write a readme at all
 
-I really want to keep all source code comments because it must easier for anyone to read and understand source code quickly.
-
 So, my final solution is to write a tools to collect all source code comments and put everything into a readme file.
 
 How it work
@@ -27,6 +27,19 @@ The script will parse source code files utilizing a sophisticated pattern matchi
 and create a dictionary for all items.
 
 Then it will sort all items and write to the destination file. 
+
+Example
+=======
+
+Input 
+
+![alt text](input.png)
+
+Output (index and detail):
+
+![alt text](output-list.png)
+
+![alt text](output-detail.png)
 
 Reference
 =========
