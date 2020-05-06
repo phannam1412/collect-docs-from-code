@@ -12,11 +12,13 @@ import (
 )
 
 type Item struct {
-	Number   string
-	Header   string
-	Body     string
-	Children []Item
+	Number   string `json:"number"`
+	Header   string `json:"header"`
+	Body     string `json:"body""`
+	Children []Item `json:"children"`
 }
+
+type Document []*Item
 
 func (this *Item) Compare(other *Item) int {
 	pieces := strings.Split(this.Number, ".")
@@ -56,23 +58,23 @@ func panicOnError(err error) {
 	}
 }
 
-func getText(item *Item, level int, forIntro bool) string {
-	text := ""
-	if forIntro {
-		text += strings.Repeat("    ", level) + " " + item.Header + "\n\n"
-	} else {
-		text += strings.Repeat("#", level+1) + " " + item.Header + "\n\n"
-		if item.Body != "" {
-			text += item.Body + "\n\n"
-		}
-	}
-	for _, child := range item.Children {
-		text += getText(&child, level+1, forIntro)
-	}
-	return text
-}
-
-func Run(paths []string, findExtensions []string, writeResultTo string) {
+//func getText(item *Item, level int, forIntro bool) string {
+//	text := ""
+//	if forIntro {
+//		text += strings.Repeat("    ", level) + " " + item.Header + "\n\n"
+//	} else {
+//		text += strings.Repeat("#", level+1) + " " + item.Header + "\n\n"
+//		if item.Body != "" {
+//			text += item.Body + "\n\n"
+//		}
+//	}
+//	for _, child := range item.Children {
+//		text += getText(&child, level+1, forIntro)
+//	}
+//	return text
+//}
+//
+func Run(paths []string, findExtensions []string) Document {
 	parserFactory := func() func(text string) *Res {
 		numberWithDot := Combine(Number, Dot)
 		somethingBeforeComment := Any(Or(Whitespace, Tab))
@@ -86,7 +88,7 @@ func Run(paths []string, findExtensions []string, writeResultTo string) {
 			return formula(tokens, 0)
 		}
 	}
-	var items []*Item
+	var items Document
 	resolver := func(res *Res) {
 		if res == nil {
 			println("no result")
@@ -100,9 +102,10 @@ func Run(paths []string, findExtensions []string, writeResultTo string) {
 				body += v2.Children[2].Value
 			}
 			body = strings.Trim(body, " \n")
+			pieces := strings.Split(header, " ")
 			items = append(items, &Item{
-				Number:   number,
-				Header:   header,
+				Number:   strings.Trim(number, "."),
+				Header:   pieces[1],
 				Body:     body,
 				Children: nil,
 			})
@@ -152,11 +155,11 @@ func Run(paths []string, findExtensions []string, writeResultTo string) {
 	for _, v := range items {
 		number := strings.Split(v.Number, ".")
 		// ignore if this item is at level 1
-		if len(number) < 3 {
+		if len(number) == 1 {
 			continue
 		}
 		// get parent of this item, e.g. 4.2.1 has parent of 4.2.
-		parent := strings.Join(number[:len(number)-2], ".") + "."
+		parent := strings.Join(number[:len(number)-1], ".")
 		if _, ok := fromNumberToItem[parent]; !ok {
 			panic(fmt.Errorf("cannot find key %s", parent))
 		}
@@ -169,20 +172,30 @@ func Run(paths []string, findExtensions []string, writeResultTo string) {
 		return items[i].Compare(items[j]) < 0
 	})
 
-	text := ""
-	intro := ""
-	// only start with items of level 1 and then recursively travel down to children
+	new := Document{}
 	for _, v := range items {
 		number := strings.Split(v.Number, ".")
-		if len(number) >= 3 {
-			continue
+		if len(number) == 1 {
+			new = append(new, v)
 		}
-		intro += getText(v, 0, true)
-		text += getText(v, 0, false)
 	}
-	text = "**WARNING: GENERATED, DO NOT EDIT !!!**\n\n" +
-		intro +
-		"\n\n" +
-		text
-	panicOnError(ioutil.WriteFile(writeResultTo, []byte(text), 0777))
+
+	return new
+
+	//text := ""
+	//intro := ""
+	//// only start with items of level 1 and then recursively travel down to children
+	//for _, v := range items {
+	//	number := strings.Split(v.Number, ".")
+	//	if len(number) >= 3 {
+	//		continue
+	//	}
+	//	intro += getText(v, 0, true)
+	//	text += getText(v, 0, false)
+	//}
+	//text = "**WARNING: GENERATED, DO NOT EDIT !!!**\n\n" +
+	//	intro +
+	//	"\n\n" +
+	//	text
+	//panicOnError(ioutil.WriteFile(writeResultTo, []byte(text), 0777))
 }
