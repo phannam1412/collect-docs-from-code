@@ -2,19 +2,52 @@ package collect_docs_from_code
 
 import (
 	"fmt"
-	. "github.com/phannam1412/go-pattern-matching"
+	. "github.com/phannam1412/go-pattern-matching/parser"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 )
 
 type Item struct {
-	Number string
-	Header string
-	Body string
+	Number   string
+	Header   string
+	Body     string
 	Children []Item
+}
+
+func (this *Item) Compare(other *Item) int {
+	pieces := strings.Split(this.Number, ".")
+	otherPieces := strings.Split(other.Number, ".")
+	pieces = pieces[:len(pieces)-1]
+	otherPieces = otherPieces[:len(otherPieces)-1]
+	max := 0
+	if len(pieces) > len(otherPieces) {
+		max = len(otherPieces)
+	} else {
+		max = len(pieces)
+	}
+	for a := 0; a < max; a++ {
+		num1, err := strconv.Atoi(pieces[a])
+		panicOnError(err)
+		num2, err := strconv.Atoi(otherPieces[a])
+		panicOnError(err)
+		if num1 > num2 {
+			return 1
+		}
+		if num1 < num2 {
+			return -1
+		}
+	}
+	if len(pieces) > len(otherPieces) {
+		return 1
+	}
+	if len(pieces) < len(otherPieces) {
+		return -1
+	}
+	return 0
 }
 
 func panicOnError(err error) {
@@ -28,19 +61,19 @@ func getText(item *Item, level int, forIntro bool) string {
 	if forIntro {
 		text += strings.Repeat("    ", level) + " " + item.Header + "\n\n"
 	} else {
-		text += strings.Repeat("#", level + 1) + " " + item.Header + "\n\n"
+		text += strings.Repeat("#", level+1) + " " + item.Header + "\n\n"
 		if item.Body != "" {
 			text += item.Body + "\n\n"
 		}
 	}
 	for _, child := range item.Children {
-		text += getText(&child, level + 1, forIntro)
+		text += getText(&child, level+1, forIntro)
 	}
 	return text
 }
 
 func Run(paths []string, findExtensions []string, writeResultTo string) {
-	parserFactory := func () func (text string) *Res {
+	parserFactory := func() func(text string) *Res {
 		numberWithDot := Combine(Number, Dot)
 		somethingBeforeComment := Any(Or(Whitespace, Tab))
 		startOfComment := Or(Sharp, Combine(Backsplash, Backsplash))
@@ -48,7 +81,7 @@ func Run(paths []string, findExtensions []string, writeResultTo string) {
 		body := AndBut(Combine(somethingBeforeComment, startOfComment, TextUntilLineEnd), header)
 		multiline := Combine(header, Any(body))
 		formula := FullSearch(multiline, 0)
-		return func (text string) *Res {
+		return func(text string) *Res {
 			tokens := Tokenize(text)
 			return formula(tokens, 0)
 		}
@@ -86,12 +119,12 @@ func Run(paths []string, findExtensions []string, writeResultTo string) {
 			name := info.Name()
 			isInvalidExtension := false
 			for _, findForExtension := range findExtensions {
-				if len(name) < len("." + findForExtension) {
+				if len(name) < len("."+findForExtension) {
 					continue
 				}
 				// cut last characters to see if it match with our expected extension
-				extension := name[len(name) - len(findForExtension) - 1:]
-				if extension != "." + findForExtension {
+				extension := name[len(name)-len(findForExtension)-1:]
+				if extension != "."+findForExtension {
 					continue
 				}
 				isInvalidExtension = true
@@ -123,7 +156,7 @@ func Run(paths []string, findExtensions []string, writeResultTo string) {
 			continue
 		}
 		// get parent of this item, e.g. 4.2.1 has parent of 4.2.
-		parent := strings.Join(number[:len(number) - 2], ".") + "."
+		parent := strings.Join(number[:len(number)-2], ".") + "."
 		if _, ok := fromNumberToItem[parent]; !ok {
 			panic(fmt.Errorf("cannot find key %s", parent))
 		}
@@ -133,7 +166,7 @@ func Run(paths []string, findExtensions []string, writeResultTo string) {
 
 	// sort topics
 	sort.Slice(items, func(i, j int) bool {
-		return strings.Compare(items[i].Number, items[j].Number) <= 0
+		return items[i].Compare(items[j]) < 0
 	})
 
 	text := ""
