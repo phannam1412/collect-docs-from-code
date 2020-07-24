@@ -2,7 +2,7 @@ package collect_docs_from_code
 
 import (
 	"fmt"
-	. "github.com/phannam1412/go-pattern-matching/parser"
+	. "github.com/phannam1412/go-pattern-matching"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -115,6 +115,9 @@ func Run(paths []string, findExtensions []string) Document {
 
 	for _, v := range paths {
 		panicOnError(filepath.Walk(v, func(path string, info os.FileInfo, err error) error {
+			if info == nil {
+				return nil
+			}
 			// ignore if this is directory, we only manipulate on file
 			if info.IsDir() {
 				return nil
